@@ -19,7 +19,8 @@ ui <- fluidPage(
     sidebarPanel(
       
       helpText("average spatio-temporal bike share
-               demand in hoboken, nj"),
+               demand in hoboken, NJ.  data from
+               jumpbikes.com.  made by justin fung."),
       
       selectInput("day", 
                   label = "day",
@@ -28,64 +29,66 @@ ui <- fluidPage(
                               "sunday"),
                   selected = "monday"),
       
-      selectInput("time", 
-                  label = "time",
-                  choices = c("00:00", "01:00", "02:00", "03:00",
-                              "04:00", "05:00", "06:00", "07:00",
-                              "08:00", "09:00", "10:00", "11:00",
-                              "12:00", "13:00", "14:00", "15:00",
-                              "16:00", "17:00", "18:00", "19:00",
-                              "20:00", "21:00", "22:00", "23:00"),
-                  selected = "12:00"),
+      sliderInput("hour",
+                  label ="hour",
+                  post=":00",
+                  min = 0, 
+                  max = 23,
+                  value = 0,
+                  step=1,
+                  animate=animationOptions(interval=700,
+                                           loop=TRUE)),
       
       radioButtons("startfinish",
-                   label = "",
-                   choices = c("ride start",
-                               "ride finish"),
-                   selected = "ride start")
+                   label = "ride start or finish",
+                   choices = c("start",
+                               "finish"),
+                   selected = "start")
     ),
     
-    mainPanel(leafletOutput("map"))
+    mainPanel(
+      leafletOutput("map")
+      )
   )
   
 )
 
 # Server logic ----
 server <- function(input, output) {
+  # Palette.
+  palette <- colorNumeric(palette = "Reds",
+                          domain=c(0, 5))
+  
   output$map <- renderLeaflet({
-    
-    # Data.
-    day_dig <- switch(input$day, 
-                   "monday" = 0, "tuesday" = 1,
-                   "wednesday" = 2, "thursday" = 3,
-                   "friday" = 4, "saturday" = 5,
-                   "sunday" = 6)
-    
-    time_dig <- switch(input$time, 
-                       "00:00" = 0, "01:00" = 1, "02:00" = 2,
-                       "03:00" = 3, "04:00" = 4, "05:00" = 5,
-                       "06:00" = 6, "07:00" = 7, "08:00" = 8,
-                       "09:00" = 9, "10:00" = 10, "11:00" = 11,
-                       "12:00" = 12, "13:00" = 13, "14:00" = 14,
-                       "15:00" = 15, "16:00" = 16, "17:00" = 17,
-                       "18:00" = 18, "19:00" = 19, "20:00" = 20,
-                       "21:00" = 21, "22:00" =22, "23:00" = 23)
-    
-    sf_dig <- switch(input$startfinish, 
-                     "ride start" = "S",
-                     "ride finish" = "F")
-    
-    var <- paste(sf_dig, day_dig, ".", time_dig, sep="")
-    
-    # Palette.
-    palette <- colorNumeric(palette = "Reds",
-                            domain=c(0, 5))
     
     # Leaflet.
     leaflet(map_dataframe) %>%
       setView(lat = 40.7455, lng = -74.0313, zoom = 14) %>%
-      addProviderTiles("CartoDB.Positron") %>%
-      addPolygons(color = "#444444",
+      addProviderTiles("CartoDB.Positron")
+
+  })
+  
+  observeEvent({input$day
+                input$hour
+                input$startfinish}, {
+    
+    # Data.
+    day_dig <- switch(input$day, 
+                      "monday" = 0, "tuesday" = 1,
+                      "wednesday" = 2, "thursday" = 3,
+                      "friday" = 4, "saturday" = 5,
+                      "sunday" = 6)
+    
+    sf_dig <- switch(input$startfinish, 
+                     "start" = "S",
+                     "finish" = "F")
+    
+    var <- paste(sf_dig, day_dig, ".", input$hour, sep="")
+    print(var)
+    leafletProxy("map") %>%
+      clearShapes() %>%
+      addPolygons(data = map_dataframe,
+                  color = "#444444",
                   weight = 0.5,
                   smoothFactor = 0.2,
                   fillOpacity = 0.4,
