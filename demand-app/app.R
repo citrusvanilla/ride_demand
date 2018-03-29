@@ -6,7 +6,12 @@ library(sf)
 library(leaflet)
 
 # Load data ----
-map_dataframe <- readRDS("data/map.rds")
+map_dataframe <- readRDS("data/map3.rds")
+
+# Get a numeric version for the color pallete.
+map_df_num <- cbind(map_dataframe)
+st_geometry(map_df_num) <- NULL
+map_df_num$id <- NULL
 
 # Source helper functions -----
 #source("map.R")
@@ -56,8 +61,9 @@ ui <- fluidPage(
 # Server logic ----
 server <- function(input, output) {
   # Palette.
-  palette <- colorNumeric(palette = "Reds",
-                          domain=c(0, 5))
+  palette <- colorBin(palette = "Reds",
+                      domain=map_df_num,
+                      bins = c(0,1,3,6,10,15,21,28,35))
   
   output$map <- renderLeaflet({
     
