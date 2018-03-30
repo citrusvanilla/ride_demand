@@ -6,7 +6,7 @@ library(sf)
 library(leaflet)
 
 # Load data ----
-map_dataframe <- readRDS("data/map3.rds")
+map_dataframe <- readRDS("data/map4.rds")
 
 # Get a numeric version for the color pallete.
 map_df_num <- cbind(map_dataframe)
@@ -23,9 +23,9 @@ ui <- fluidPage(
   sidebarLayout(
     sidebarPanel(
       
-      helpText("average spatio-temporal bike share
-               demand in hoboken, NJ.  data from
-               jumpbikes.com.  made by justin fung."),
+      helpText("Relative forecast of spatio-temporal bike share
+               demand and flow for Hoboken, NJ.  Data from
+               JumpBikes.com.  Made by Justin Fung."),
       
       selectInput("day", 
                   label = "day",
@@ -39,7 +39,7 @@ ui <- fluidPage(
                   post=":00",
                   min = 0, 
                   max = 23,
-                  value = 0,
+                  value = 8,
                   step=1,
                   animate=animationOptions(interval=700,
                                            loop=TRUE)),
@@ -63,7 +63,8 @@ server <- function(input, output) {
   # Palette.
   palette <- colorBin(palette = "Reds",
                       domain=map_df_num,
-                      bins = c(0,1,3,6,10,15,21,28,35))
+                      bins = c(0,2,4,8,15,25,37,50,70,100),
+                      na.color = "FFF5F0")
   
   output$map <- renderLeaflet({
     
