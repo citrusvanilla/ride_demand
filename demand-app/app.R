@@ -6,7 +6,7 @@ library(sf)
 library(leaflet)
 
 # Load data ----
-map_dataframe <- readRDS("data/map4.rds")
+map_dataframe <- readRDS("data/map.rds")
 
 # Get a numeric version for the color pallete.
 map_df_num <- cbind(map_dataframe)
@@ -18,14 +18,25 @@ map_df_num$id <- NULL
 
 # User interface ----
 ui <- fluidPage(
-  titlePanel("demandViz"),
+  
+  tags$head(
+    tags$style(HTML("
+                    .leaflet-control-attribution, .leaflet-control-scale-line {
+                      padding: 0 5px;
+                      color: #333;
+                      display: none;
+                    }
+                    "))
+    ),
+  
+  titlePanel("bikeDemandViz"),
   
   sidebarLayout(
     sidebarPanel(
       
-      helpText("Relative forecast of spatio-temporal bike share
-               demand and flow for Hoboken, NJ.  Data from
-               JumpBikes.com.  Made by Justin Fung."),
+      helpText("forecast of spatio-temporal bike share
+               demand and movement for hoboken, nj."),
+      helpText("data from Jump Bicycles."),
       
       selectInput("day", 
                   label = "day",
@@ -91,7 +102,12 @@ server <- function(input, output) {
                      "finish" = "F")
     
     var <- paste(sf_dig, day_dig, ".", input$hour, sep="")
-    print(var)
+    
+    labels <- sprintf(
+      "<strong>demand:</strong> %g",
+      map_dataframe[[var]]
+    ) %>% lapply(htmltools::HTML)
+    
     leafletProxy("map") %>%
       clearShapes() %>%
       addPolygons(data = map_dataframe,
@@ -99,7 +115,17 @@ server <- function(input, output) {
                   weight = 0.5,
                   smoothFactor = 0.2,
                   fillOpacity = 0.4,
-                  fillColor = ~palette(map_dataframe[[var]]))
+                  fillColor = ~palette(map_dataframe[[var]]),
+                  highlight = highlightOptions(
+                    weight = 2,
+                    bringToFront = TRUE
+                  ),
+                  label = labels,
+                  labelOptions = labelOptions(
+                    style = list("font-weight" = "normal", padding = "3px 8px"),
+                    textsize = "15px",
+                    direction = "auto"))
+                  
   })
 }
   
