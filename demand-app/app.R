@@ -74,7 +74,7 @@ server <- function(input, output) {
   # Palette.
   palette <- colorBin(palette = "Reds",
                       domain=map_df_num,
-                      bins = c(0,2,4,8,15,25,37,50,70,100),
+                      bins = c(0,1,3,6,10,15,21,28,36,100),
                       na.color = "FFF5F0")
   
   output$map <- renderLeaflet({
